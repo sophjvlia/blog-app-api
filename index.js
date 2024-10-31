@@ -1,5 +1,6 @@
 const path = require('path');
 const express = require('express');
+const cors = require('cors');
 const pg = require('pg');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -13,6 +14,7 @@ const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 });
 
+app.use(cors());
 app.use(express.json());
 
 app.post('/signup', async (req, res) => {
