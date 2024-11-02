@@ -73,67 +73,67 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// app.get('/blogs', async (req, res) => {
+app.get('/blogs', async (req, res) => {
 
-//   try {
-//     const result = await pool.query('SELECT * FROM blogs');
+  try {
+    const result = await pool.query('SELECT * FROM blogs');
 
-//     res.status(200).json(result.rows);
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
-// app.get('/blogs/:id', async (req, res) => {
-//   const blogId = parseInt(req.params.id);
+app.get('/blogs/:id', async (req, res) => {
+  const blogId = parseInt(req.params.id);
 
-//   try {
-//     const result = await pool.query('SELECT * FROM blogs WHERE id = $1'. [blogId]);
+  try {
+    const result = await pool.query('SELECT * FROM blogs WHERE id = $1'. [blogId]);
 
-//     if (result.rows.length === 0) {
-//       res.status(400).json({ error: 'Blog post not found' });
-//     }
+    if (result.rows.length === 0) {
+      res.status(400).json({ error: 'Blog post not found' });
+    }
 
-//     res.status(200).json(result.rows[0]);
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
-// app.post('/blogs', (req, res) => {
-//   const { title, description, user_id } = req.body;
+app.post('/blogs', (req, res) => {
+  const { title, description, user_id } = req.body;
 
-//   try {
-//     const result = await pool.query(
-//       'INSERT INTO blogs (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
-//       [user_id, title, description]
-//     );
+  try {
+    const result = await pool.query(
+      'INSERT INTO blogs (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
+      [user_id, title, description]
+    );
 
-//     res.status(200).json({ message: 'Blog post added successfully', blog: result.rows[0] });
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    res.status(200).json({ message: 'Blog post added successfully', blog: result.rows[0] });
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
-// app.patch('/blogs/:id', (req, res) => {
-//   const blogId = parseInt(req.params.id);
-//   const { title, description, user_id } = req.body;
+app.patch('/blogs/:id', (req, res) => {
+  const blogId = parseInt(req.params.id);
+  const { title, description, user_id } = req.body;
 
-//   try {
-//     const result = await pool.query(
-//       'INSERT INTO blogs (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
-//       [user_id, title, description]
-//     );
+  try {
+    const result = await pool.query(
+      'INSERT INTO blogs (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
+      [user_id, title, description]
+    );
 
-//     res.status(200).json({ message: 'Blog post updated successfully', blog: result.rows[0] });
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    res.status(200).json({ message: 'Blog post updated successfully', blog: result.rows[0] });
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'pages/index.html'));
