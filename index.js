@@ -17,7 +17,25 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
-app.post('/signup', async (req, res) => {
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token.' });
+    }
+
+    req.user = user;
+    next();
+  });
+}
+
+app.post('/auth/signup', async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -46,7 +64,7 @@ app.post('/signup', async (req, res) => {
   }
 });
 
-app.post('/login', async (req, res) => {
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -73,11 +91,11 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/blogs', async (req, res) => {
+app.get('/posts', async (req, res) => {
   const { user_id } = req.query;
 
   try {
-    const result = await pool.query('SELECT * FROM blogs WHERE user_id = $1', [user_id]);
+    const result = await pool.query('SELECT * FROM posts WHERE user_id = $1', [user_id]);
 
     res.status(200).json(result.rows);
   } catch (err) {
@@ -86,11 +104,11 @@ app.get('/blogs', async (req, res) => {
   }
 });
 
-app.get('/blogs/:id', async (req, res) => {
+app.get('/posts/:id', async (req, res) => {
   const blogId = parseInt(req.params.id);
 
   try {
-    const result = await pool.query('SELECT * FROM blogs WHERE id = $1', [blogId]);
+    const result = await pool.query('SELECT * FROM posts WHERE id = $1', [blogId]);
 
     if (result.rows.length === 0) {
       res.status(400).json({ error: 'Blog post not found' });
@@ -103,12 +121,13 @@ app.get('/blogs/:id', async (req, res) => {
   }
 });
 
-app.post('/blogs', async (req, res) => {
-  const { title, content, user_id } = req.body;
+app.post('/posts', authenticateToken, async (req, res) => {
+  const { title, content } = req.body;
+  const user_id = req.user.id;
 
   try {
     const result = await pool.query(
-      'INSERT INTO blogs (user_id, title, content) VALUES ($1, $2, $3) RETURNING *',
+      'INSERT INTO posts (user_id, title, content) VALUES ($1, $2, $3) RETURNING *',
       [user_id, title, content]
     );
 
@@ -119,13 +138,14 @@ app.post('/blogs', async (req, res) => {
   }
 });
 
-app.patch('/blogs/:id', async (req, res) => {
+app.patch('/posts/:id', authenticateToken, async (req, res) => {
   const blogId = parseInt(req.params.id);
-  const { title, content, user_id } = req.body;
+  const { title, content } = req.body;
+  const user_id = req.user.id;
 
   try {
     const result = await pool.query(
-      'UPDATE blogs SET title = $1, content = $2, user_id = $3 WHERE id = $4 RETURNING *',
+      'UPDATE posts SET title = $1, content = $2, user_id = $3 WHERE id = $4 RETURNING *',
       [title, content, user_id, blogId]
     );
 
@@ -140,11 +160,21 @@ app.patch('/blogs/:id', async (req, res) => {
   }
 });
 
-app.delete('/blogs/:id', async (req, res) => {
+app.delete('/posts/:id', authenticateToken, async (req, res) => {
   const blogId = parseInt(req.params.id);
+  const user_id = req.user.id;
 
   try {
-    const result = await pool.query('DELETE FROM blogs WHERE id = $1', [blogId]);
+    const checkOwnership = await pool.query(
+      'SELECT * FROM posts WHERE id = $1 AND user_id = $2',
+      [blogId, user_id]
+    );
+
+    if (checkOwnership.rowCount === 0) {
+      return res.status(404).json({ error: 'Blog post not found or not authorized to delete' });
+    }
+
+    const result = await pool.query('DELETE FROM posts WHERE id = $1', [blogId]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Blog post not found' });
