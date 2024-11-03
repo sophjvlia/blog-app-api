@@ -15,6 +15,7 @@ const pool = new Pool({
 });
 
 app.use(cors());
+app.use(cors({ origin: 'https://vitejsvitehzlaj9-cjaj--5173--34c588ed.local-credentialless.webcontainer.io' }));
 app.use(express.json());
 
 app.post('/signup', async (req, res) => {
