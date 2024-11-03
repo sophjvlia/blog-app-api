@@ -74,9 +74,10 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/blogs', async (req, res) => {
+  const { user_id } = req.body;
 
   try {
-    const result = await pool.query('SELECT * FROM blogs');
+    const result = await pool.query('SELECT * FROM blogs WHERE user_id = $1', [user_id]);
 
     res.status(200).json(result.rows);
   } catch (err) {
