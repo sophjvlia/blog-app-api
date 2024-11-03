@@ -86,22 +86,22 @@ app.get('/blogs', async (req, res) => {
   }
 });
 
-// app.get('/blogs/:id', async (req, res) => {
-//   const blogId = parseInt(req.params.id);
+app.get('/blogs/:id', async (req, res) => {
+  const blogId = parseInt(req.params.id);
 
-//   try {
-//     const result = await pool.query('SELECT * FROM blogs WHERE id = $1'. [blogId]);
+  try {
+    const result = await pool.query('SELECT * FROM blogs WHERE id = $1', [blogId]);
 
-//     if (result.rows.length === 0) {
-//       res.status(400).json({ error: 'Blog post not found' });
-//     }
+    if (result.rows.length === 0) {
+      res.status(400).json({ error: 'Blog post not found' });
+    }
 
-//     res.status(200).json(result.rows[0]);
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
 app.post('/blogs', async (req, res) => {
   const { title, content, user_id } = req.body;
@@ -119,22 +119,43 @@ app.post('/blogs', async (req, res) => {
   }
 });
 
-// app.patch('/blogs/:id', (req, res) => {
-//   const blogId = parseInt(req.params.id);
-//   const { title, description, user_id } = req.body;
+app.patch('/blogs/:id', async (req, res) => {
+  const blogId = parseInt(req.params.id);
+  const { title, content, user_id } = req.body;
 
-//   try {
-//     const result = await pool.query(
-//       'INSERT INTO blogs (user_id, title, description) VALUES ($1, $2, $3) RETURNING *',
-//       [user_id, title, description]
-//     );
+  try {
+    const result = await pool.query(
+      'UPDATE blogs SET title = $1, content = $2, user_id = $3 WHERE id = $4 RETURNING *',
+      [title, content, user_id, blogId]
+    );
 
-//     res.status(200).json({ message: 'Blog post updated successfully', blog: result.rows[0] });
-//   } catch (err) {
-//     console.error('Error executing query', err);
-//     res.status(500).json({ error: 'Database query failed' });
-//   }
-// });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Blog post not found' });
+    }
+
+    res.status(200).json({ message: 'Blog post updated successfully', blog: result.rows[0] });
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+app.delete('/blogs/:id', async (req, res) => {
+  const blogId = parseInt(req.params.id);
+
+  try {
+    const result = await pool.query('DELETE FROM blogs WHERE id = $1', [blogId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Blog post not found' });
+    }
+
+    res.status(200).json({ message: 'Blog post deleted successfully' });
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'pages/index.html'));
